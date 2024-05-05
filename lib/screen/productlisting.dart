@@ -1,22 +1,23 @@
+import 'dart:convert';
+import 'package:http/http.dart' as http;
 import 'package:flutter/material.dart';
-import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:vinnovatetest/provider/product.dart';
+import 'package:vinnovatetest/data/models/productmodel.dart';
 
-class Productlisting extends ConsumerStatefulWidget {
-  const Productlisting({super.key});
-
+class ProductListPage extends StatefulWidget {
   @override
-  ConsumerState<Productlisting> createState() => _ProductlistingState();
+  _ProductListPageState createState() => _ProductListPageState();
 }
 
-class _ProductlistingState extends ConsumerState<Productlisting> {
-  final ScrollController _scrollController = ScrollController();
+class _ProductListPageState extends State<ProductListPage> {
   int _currentPage = 1;
-  bool _isLoadingMore = false;
+  List<Product> _products = [];
+  bool _isLoading = false;
+  final ScrollController _scrollController = ScrollController();
 
   @override
   void initState() {
     super.initState();
+    _fetchProducts();
     _scrollController.addListener(_loadMoreProducts);
   }
 
@@ -29,53 +30,56 @@ class _ProductlistingState extends ConsumerState<Productlisting> {
   void _loadMoreProducts() {
     if (_scrollController.position.pixels ==
         _scrollController.position.maxScrollExtent) {
-      if (!_isLoadingMore) {
-        _isLoadingMore = true;
-        _currentPage++;
-        ref.refresh(productsProvider(_currentPage));
-        _isLoadingMore = false;
+      _fetchProducts();
+    }
+  }
+
+  Future<void> _fetchProducts() async {
+    try {
+      setState(() {
+        _isLoading = true;
+      });
+      final response = await http.get(Uri.parse(
+          'https://fakestoreapi.com/products?limit=${10 + _currentPage}'));
+      if (response.statusCode == 200) {
+        final List<dynamic> responseData = json.decode(response.body);
+        setState(() {
+          _products.clear(); // Clear the existing list
+          _products.addAll(responseData.map((json) => Product.fromJson(json)));
+          _currentPage++;
+          _isLoading = false;
+        });
+      } else {
+        throw Exception('Failed to load products');
       }
+    } catch (e) {
+      print(e);
     }
   }
 
   @override
   Widget build(BuildContext context) {
-    final productsAsyncValue = ref.watch(productsProvider(_currentPage));
-
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Fake Store'),
+        title: Text('Product List'),
       ),
-      body: productsAsyncValue.when(
-        data: (products) {
-          if (products.isEmpty) {
-            return const Center(
-              child: Text('No products found'),
+      body: ListView.builder(
+        itemCount: _products.length + (_isLoading ? 1 : 0),
+        itemBuilder: (context, index) {
+          if (index == _products.length && _isLoading) {
+            return Center(child: CircularProgressIndicator());
+          } else if (index < _products.length) {
+            final product = _products[index];
+            return ListTile(
+              leading: Image.network(product.image),
+              title: Text(product.title),
+              subtitle: Text(product.price.toString()),
             );
+          } else {
+            return SizedBox.shrink(); // Return an empty widget
           }
-
-          return ListView.builder(
-            controller: _scrollController,
-            itemCount: _isLoadingMore ? products.length + 1 : products.length,
-            itemBuilder: (context, index) {
-              if (index == products.length) {
-                return const Padding(
-                  padding: EdgeInsets.symmetric(vertical: 16.0),
-                  child: Center(child: CircularProgressIndicator()),
-                );
-              }
-
-              final product = products[index];
-              return ListTile(
-                title: Text(product.title),
-                subtitle: Text('\$${product.price.toString()}'),
-                leading: Image.network(product.image),
-              );
-            },
-          );
         },
-        loading: () => const Center(child: CircularProgressIndicator()),
-        error: (error, stackTrace) => Center(child: Text('Error: $error')),
+        controller: _scrollController,
       ),
     );
   }

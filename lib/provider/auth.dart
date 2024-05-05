@@ -28,7 +28,7 @@ class AuthNotifier extends StateNotifier<AuthState> {
       );
       Navigator.pushReplacement(
         context,
-        MaterialPageRoute(builder: (context) => Productlisting()),
+        MaterialPageRoute(builder: (context) => ProductListPage()),
       );
     } on FirebaseAuthException catch (e) {
       state = AuthState.error(e.message ?? "An error occurred during login");
