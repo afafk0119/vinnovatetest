@@ -43,6 +43,7 @@ dependencies:
   flutter_svg: ^2.0.10+1
   firebase_core: ^2.30.1
   fluttertoast: ^8.2.5
+  flutter_rating_bar: ^4.0.1
 
 dev_dependencies:
   flutter_test:
