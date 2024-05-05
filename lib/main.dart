@@ -4,6 +4,7 @@ import 'package:flutter/services.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:vinnovatetest/controllers/route.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:vinnovatetest/screen/loginscreen.dart';
 import 'package:vinnovatetest/screen/productlisting.dart';
 
 Future<void> main() async {
@@ -51,7 +52,7 @@ class MyApp extends StatelessWidget {
               scaffoldBackgroundColor: Color(0xFFF9F4F0),
               useMaterial3: true,
             ),
-            home: ProductListPage(),
+            home: LoginScreen(),
             initialRoute: initialRoute,
             onGenerateRoute: Routers.generateRoute,
           );
