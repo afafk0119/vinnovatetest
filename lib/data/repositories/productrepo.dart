@@ -1,19 +1,17 @@
-import 'package:flutter/foundation.dart';
+import 'dart:convert';
+import 'package:http/http.dart' as http;
 import 'package:vinnovatetest/data/models/productmodel.dart';
-import 'package:vinnovatetest/data/service/network.dart';
 
 class ProductRepository {
-  final ApiService apiService;
-
-  ProductRepository({required this.apiService});
-
   Future<List<Product>> fetchProducts(int page) async {
-    try {
-      final products = await apiService.fetchProducts(page);
-      return products;
-    } catch (e) {
-      debugPrint('Error fetching products: $e');
-      rethrow;
+    final response = await http
+        .get(Uri.parse('https://fakestoreapi.com/products?limit=${10 + page}'));
+
+    if (response.statusCode == 200) {
+      final List<dynamic> responseData = json.decode(response.body);
+      return responseData.map((json) => Product.fromJson(json)).toList();
+    } else {
+      throw Exception('Failed to load products');
     }
   }
 }
